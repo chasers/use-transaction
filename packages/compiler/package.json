@@ -27,6 +27,8 @@
   "dependencies": {
     "@babel/core": "^7.24.0",
     "@babel/generator": "^7.24.0",
+    "@babel/plugin-syntax-jsx": "^7.24.0",
+    "@babel/plugin-syntax-typescript": "^7.24.0",
     "@babel/traverse": "^7.24.0",
     "@babel/types": "^7.24.0",
     "@use-transaction/migration": "workspace:*"

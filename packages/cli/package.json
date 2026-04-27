@@ -1,0 +1,30 @@
+{
+  "name": "@use-transaction/cli",
+  "version": "0.0.1",
+  "description": "CLI for use-transaction — extract SQL from source files and emit migration files",
+  "type": "module",
+  "bin": {
+    "use-transaction": "./dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@use-transaction/compiler": "workspace:*",
+    "@use-transaction/migration": "workspace:*",
+    "commander": "^12.0.0",
+    "fast-glob": "^3.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "vitest": "^2.0.0"
+  }
+}

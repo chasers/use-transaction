@@ -3,6 +3,7 @@
   "references": [
     { "path": "packages/migration" },
     { "path": "packages/core" },
-    { "path": "packages/compiler" }
+    { "path": "packages/compiler" },
+    { "path": "packages/cli" }
   ]
 }
