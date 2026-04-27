@@ -1,4 +1,5 @@
-export { useTransaction } from './hooks.js'
-export { useTransactionMutation } from './hooks.js'
+export { useTransaction, useTransactionMutation } from './hooks.js'
+export { _useTransactionRpc, _useTransactionMutationRpc } from './hooks.js'
 export { TransactionProvider } from './provider.js'
-export type { TransactionOptions, FetcherAdapter, SqlFunction } from './types.js'
+export { defaultAdapter } from './adapters/default.js'
+export type { TransactionOptions, FetcherAdapter, QueryResult, MutationTuple, RpcClient, SecurityMode } from './types.js'

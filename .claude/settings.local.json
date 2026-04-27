@@ -6,7 +6,8 @@
       "Bash(git commit -m ' *)",
       "Bash(pnpm --version)",
       "Bash(asdf plugin *)",
-      "Bash(pnpm typecheck *)"
+      "Bash(pnpm typecheck *)",
+      "Bash(git commit *)"
     ]
   }
 }
