@@ -4,117 +4,127 @@ Rough phases, ordered by dependency. Each phase should be independently shippabl
 
 ---
 
-## Phase 0 — Repo Scaffolding
+## Phase 0 — Repo Scaffolding ✅
 
-- [ ] Initialize pnpm workspace with `packages/` and `apps/` directories
-- [ ] Set up `packages/core`, `packages/compiler`, `packages/migration`
-- [ ] TypeScript project references, shared `tsconfig.base.json`
+- [x] Initialize pnpm workspace with `packages/` and `apps/` directories
+- [x] Set up `packages/core`, `packages/compiler`, `packages/migration`
+- [x] TypeScript project references, shared `tsconfig.base.json`
 - [ ] Linting (ESLint), formatting (Prettier), basic CI (GitHub Actions)
 - [ ] Changesets for versioning
 
 ---
 
-## Phase 1 — Core Runtime (`@use-transaction/core`)
+## Phase 1 — Core Runtime (`@use-transaction/core`) ✅
 
 Goal: a `useTransaction` React hook that is safe to import in frontend code and throws a clear error if the compiler transform was skipped.
 
 `useTransaction` is a proper React hook — it returns `{ data, loading, error }` and re-fetches when interpolated values change (they become the reactive dependency array, equivalent to `useEffect` deps).
 
-- [ ] Define `useTransaction` (SELECT) and `useTransactionMutation` (INSERT/UPDATE/DELETE RETURNING) as React hooks
-- [ ] Runtime stub that throws `MissingCompilerTransformError` with a helpful message
-- [ ] TypeScript generics for return type annotation: `useTransaction<Row[]>`
-- [ ] Define fetcher adapter interface (pluggable — React Query, SWR, etc.)
-- [ ] `<TransactionProvider adapter={...}>` at the app root — adapter configured once, consumed by all `useTransaction` hooks via context
-- [ ] Ship a built-in default adapter (plain `useState` + `useEffect`) so the hook works with no provider required
+- [x] Define `useTransaction` (SELECT) and `useTransactionMutation` (INSERT/UPDATE/DELETE RETURNING) as React hooks
+- [x] Runtime stub that throws `MissingCompilerTransformError` with a helpful message
+- [x] TypeScript generics for return type annotation: `useTransaction<Row[]>`
+- [x] Define fetcher adapter interface (pluggable — React Query, SWR, etc.)
+- [x] `<TransactionProvider adapter={...}>` at the app root — adapter configured once, consumed by all `useTransaction` hooks via context
+- [x] Ship a built-in default adapter (plain `useState` + `useEffect`) so the hook works with no provider required
 - [ ] First-party adapters: `@use-transaction/adapter-react-query`, `@use-transaction/adapter-swr`
-- [ ] React as a peer dependency
-- [ ] Export `MigrationAdapter` and `SqlFunction` types (used by adapter authors)
-- [ ] Unit tests for the stub behavior
+- [x] React as a peer dependency
+- [x] Export `MigrationAdapter` and `SqlFunction` types (used by adapter authors)
+- [x] Unit tests for the stub behavior
 
 ---
 
-## Phase 2 — SQL Extraction & Fingerprinting (`@use-transaction/compiler`)
+## Phase 2 — SQL Extraction & Fingerprinting (`@use-transaction/compiler`) ✅
 
 Goal: given a source file, find all `useTransaction` calls and produce a stable function name + cleaned SQL.
 
-- [ ] AST visitor (using `@babel/traverse` or `ts-morph`) that locates tagged template literals
-- [ ] Extract static SQL string and identify interpolated expressions
-- [ ] Validate interpolations at compile time — hard error on: nested template literals, string-returning function calls, spread expressions, or any expression that could produce a SQL fragment. Only allow identifiers and primitive literals.
-- [ ] Generate deterministic `ut_<hash>` name from the SQL body (SHA-256, first 8 hex chars)
-- [ ] Represent extracted info as `SqlFunction` objects
-- [ ] Unit tests: correct extraction, stable hashing, interpolation edge cases
+- [x] AST visitor (using `@babel/traverse`) that locates tagged template literals
+- [x] Extract static SQL string and identify interpolated expressions
+- [x] Validate interpolations at compile time — hard error on: nested template literals, string-returning function calls, spread expressions, or any expression that could produce a SQL fragment. Only allow identifiers and primitive literals.
+- [x] Generate deterministic `ut_<hash>` name from the SQL body (SHA-256, first 8 hex chars)
+- [x] Optional `label` option for human-readable names: `ut_list_users_by_org_<hash>`
+- [x] Source tracing: `source: { file, line }` on every `SqlFunction` for `-- source:` comments in migrations
+- [x] Represent extracted info as `SqlFunction` objects
+- [x] Unit tests: correct extraction, stable hashing, interpolation edge cases
 
 ---
 
-## Phase 3 — AST Rewrite (compiler, continued)
+## Phase 3 — AST Rewrite (compiler, continued) ✅
 
 Goal: replace `useTransaction` calls in source with the appropriate RPC call.
 
-- [ ] Decide on rewrite target format (supabase-js `rpc()` call vs. raw `fetch`)
-- [ ] Implement Babel plugin that rewrites the tagged template to the RPC call
-- [ ] Preserve TypeScript types through the transform (return type annotation flows through)
-- [ ] Map interpolated template expressions to named RPC parameters
-- [ ] Unit tests: rewritten output matches expected AST/source
+- [x] Rewrite target: `_useTransactionRpc(name, params)` / `_useTransactionMutationRpc(name, params)` — calls the adapter via context, not supabase-js directly
+- [x] Implement Babel plugin that rewrites the tagged template to the RPC call
+- [x] Preserve TypeScript generic type parameters through the transform
+- [x] Map interpolated template expressions to named RPC parameters (shorthand object)
+- [x] Auto-inject `import { _useTransactionRpc } from '@use-transaction/core'` — merges with existing import if present
+- [x] Unit tests: rewritten output matches expected AST/source
 
 ---
 
-## Phase 4 — Default Migration Adapter
+## Phase 4 — Default Migration Adapter ✅
 
 Goal: emit `.sql` files for the extracted functions.
 
-- [ ] Implement `DefaultAdapter` — writes `<outputDir>/<timestamp>_<name>.sql`
-- [ ] SQL file template: `CREATE OR REPLACE FUNCTION`, parameter list, return type, body
-- [ ] Idempotency: skip emit if the hash hasn't changed (compare against previously emitted files)
-- [ ] `MigrationAdapter` interface finalized
-- [ ] Unit tests for file output, idempotency
+- [x] Implement `DefaultAdapter` — writes `<outputDir>/<timestamp>_<name>.sql`
+- [x] SQL file template: `CREATE OR REPLACE FUNCTION`, parameter list, `RETURNS SETOF json`, `SECURITY INVOKER/DEFINER`, `STABLE` for queries
+- [x] Idempotency: skip emit if hash already present in any existing `.sql` file (works across adapter instances)
+- [x] `MigrationAdapter` interface finalized
+- [x] Unit tests for file output, idempotency, source comment, security modes
 
 ---
 
-## Phase 5 — Vite Plugin
+## Phase 5 — Vite Plugin ✅
 
 Goal: integrate the compiler into a standard Vite project build.
 
-- [ ] Implement `vitePluginUseTransaction()` that hooks into Vite's transform pipeline
-- [ ] Load `use-transaction.config.ts` and instantiate the configured adapter
-- [ ] Run extraction + rewrite on each transformed file
-- [ ] Collect all emitted `SqlFunction` objects and flush to adapter at build end
-- [ ] Watch mode: re-run transform and re-emit on file changes
-- [ ] Integration test: build a small fixture project and assert output files
+- [x] `vitePlugin(options)` with `enforce: 'pre'` hooks into Vite's transform pipeline
+- [x] Fast two-stage filter: extension check then content check — files without `useTransaction` skip immediately
+- [x] Uses `@babel/plugin-syntax-typescript` (syntax-only) so Vite's esbuild still handles TS stripping
+- [x] Migrations emitted on first transform of each file; idempotency handled by `DefaultAdapter`
+- [ ] Config file loading (`use-transaction.config.ts`) — adapter is currently passed directly
+- [ ] Watch mode: explicit re-emit on HMR file change
+- [x] Tests: transform filtering, TS preservation, source maps, adapter integration
 
 ---
 
 ## Phase 6 — Supabase Migration Adapter
 
-Goal: emit migrations in the format `supabase db push` expects.
+Goal: emit migrations in the format `supabase db push` expects, with programmatic application support.
 
-- [ ] Research Supabase migration file naming convention and SQL expectations
-- [ ] Implement `SupabaseAdapter` writing to `supabase/migrations/`
-- [ ] Handle Supabase's requirement that migrations be append-only (no `CREATE OR REPLACE` in older Supabase versions — may need versioned function names or `DROP + CREATE`)
+**Note:** `DefaultAdapter` already works for the standard `supabase/migrations` file-based workflow — the Supabase CLI picks up any `.sql` files in that directory. This phase is for richer Supabase-specific integration.
+
+- [ ] Research whether `CREATE OR REPLACE FUNCTION` is safe across all Supabase versions
+- [ ] Implement `SupabaseAdapter` that applies migrations via the Supabase Management API (for CI/CD without the CLI)
+- [ ] Resolve team migration conflict open question: two devs generating different timestamps for the same hash
 - [ ] Document how to pair with `supabase db push` or `supabase gen types`
 - [ ] Integration test against a local Supabase instance
 
 ---
 
-## Phase 7 — CLI
+## Phase 7 — CLI ✅
 
 Goal: allow non-Vite projects to run the transform as a standalone step.
 
-- [ ] `use-transaction compile <glob>` — run extraction + rewrite on matching files, emit migrations
-- [ ] `use-transaction diff` — show which SQL functions would be added/changed without writing files
-- [ ] Config file resolution
-- [ ] Wire into a typical `package.json` `build` script
+- [x] `use-transaction compile [pattern]` — scan source files, extract SQL, emit migrations via `DefaultAdapter`
+- [x] `use-transaction check [pattern]` — verify all queries have been compiled; exits 1 if any migration is missing (CI gate)
+- [x] `--output <dir>` flag on both commands (default: `supabase/migrations`)
+- [x] Collects and reports `CompilerError`s without aborting the whole run
+- [ ] `use-transaction diff` — show which functions would be added/changed without writing files
+- [ ] Config file resolution (`use-transaction.config.ts`)
 
 ---
 
-## Phase 8 — Demo App
+## Phase 8 — Demo App ✅ (mock) / 🔲 (real Supabase)
 
 Goal: a real working example that shows the full loop.
 
-- [ ] Scaffold a Vite + React app in `apps/demo`
-- [ ] Connect to a local Supabase instance
-- [ ] Write 2–3 `useTransaction` queries that exercise different patterns (simple select, join, parameterized)
-- [ ] Show the before/after: developer source vs. compiled output vs. generated migration
-- [ ] Include a `README` with step-by-step instructions to run the demo
+- [x] Scaffold a Vite + React app in `apps/demo`
+- [x] Todo list using `useTransaction` (SELECT) and `useTransactionMutation` (INSERT, UPDATE)
+- [x] Mock `RpcClient` so demo runs without a real database
+- [x] Vite plugin wired up — 3 migration files emitted on first `pnpm dev`
+- [x] Shows transformed output: `useTransaction\`...\`` → `_useTransactionRpc("ut_60791ffb", {})`
+- [ ] Connect to a real local Supabase instance (swap `mockClient` for `createClient(...)`)
+- [ ] `README` with step-by-step instructions to run with Supabase
 - [ ] Stretch: deploy to Vercel with a hosted Supabase project
 
 ---
@@ -141,9 +151,9 @@ Goal: a real working example that shows the full loop.
 
 ## Milestone Summary
 
-| Milestone | Phases | Deliverable |
-|-----------|--------|-------------|
-| M1 — Proof of concept | 1–3 | Manual transform of a single file works |
-| M2 — Local dev loop | 4–5 | Vite dev server extracts SQL and writes migrations on save |
-| M3 — Supabase ready | 6 | Full round-trip with `supabase db push` |
-| M4 — Polished | 7–8 | CLI + demo app, ready for external feedback |
+| Milestone | Phases | Status | Deliverable |
+|-----------|--------|--------|-------------|
+| M1 — Proof of concept | 1–3 | ✅ Done | Manual transform of a single file works |
+| M2 — Local dev loop | 4–5 | ✅ Done | Vite dev server extracts SQL and writes migrations on save |
+| M3 — Supabase ready | 6 | 🔲 Next | Full round-trip with `supabase db push` |
+| M4 — Polished | 7–8 | ✅ Done (partial) | CLI + demo app, ready for external feedback |
