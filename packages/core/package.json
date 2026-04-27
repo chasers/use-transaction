@@ -1,0 +1,27 @@
+{
+  "name": "@use-transaction/core",
+  "version": "0.0.1",
+  "description": "React hooks for use-transaction — useTransaction and useTransactionMutation",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "react": "^18.0.0",
+    "vitest": "^2.0.0"
+  }
+}

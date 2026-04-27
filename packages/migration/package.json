@@ -1,0 +1,26 @@
+{
+  "name": "@use-transaction/migration",
+  "version": "0.0.1",
+  "description": "Migration adapter interface and built-in adapters for use-transaction",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./supabase": {
+      "import": "./dist/supabase.js",
+      "types": "./dist/supabase.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "vitest": "^2.0.0"
+  }
+}

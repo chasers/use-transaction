@@ -1,0 +1,29 @@
+{
+  "name": "use-transaction-monorepo",
+  "private": true,
+  "scripts": {
+    "build": "tsc -b",
+    "test": "pnpm -r test",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "typecheck": "tsc -b"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.0",
+    "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  },
+  "packageManager": "pnpm@10.33.2",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  }
+}
