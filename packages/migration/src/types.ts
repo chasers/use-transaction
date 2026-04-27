@@ -13,6 +13,7 @@ export interface SqlFunction {
   hash: string
   security: SecurityMode
   type: SqlFunctionType
+  source?: { file: string; line: number }
 }
 
 export interface MigrationAdapter {

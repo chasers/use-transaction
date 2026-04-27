@@ -59,6 +59,22 @@ describe('extractFromSource', () => {
     expect(result.sqlFunction.security).toBe('invoker')
   })
 
+  it('uses label in function name when provided', () => {
+    const result = extractOne("useTransaction({ label: 'listUsersByOrg' })`SELECT 1`")
+    expect(result.sqlFunction.name).toBe('ut_list_users_by_org_e004ebd5')
+  })
+
+  it('includes source file and line in sqlFunction', () => {
+    const result = extractOne('useTransaction`SELECT 1`')
+    expect(result.sqlFunction.source?.file).toBe('test.ts')
+    expect(result.sqlFunction.source?.line).toBeGreaterThan(0)
+  })
+
+  it('uses hash-only name when no label is provided', () => {
+    const result = extractOne('useTransaction`SELECT 1`')
+    expect(result.sqlFunction.name).toMatch(/^ut_[0-9a-f]{8}$/)
+  })
+
   it('extracts multiple calls from one file', () => {
     const results = extractFromSource(`
       useTransaction\`SELECT 1\`

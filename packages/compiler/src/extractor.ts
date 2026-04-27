@@ -37,6 +37,11 @@ export interface ExtractedCall {
   hookName: HookName
 }
 
+interface ExtractedOptions {
+  security: SecurityMode
+  label: string | undefined
+}
+
 // Returns null if the path is not a useTransaction/useTransactionMutation call.
 export function extractTaggedTemplate(
   path: NodePath<t.TaggedTemplateExpression>,
@@ -45,7 +50,7 @@ export function extractTaggedTemplate(
   const { tag, quasi } = path.node
 
   let hookName: HookName
-  let security: SecurityMode = 'invoker'
+  let options: ExtractedOptions = { security: 'invoker', label: undefined }
 
   if (t.isIdentifier(tag) && HOOK_NAMES.has(tag.name)) {
     hookName = tag.name as HookName
@@ -55,7 +60,7 @@ export function extractTaggedTemplate(
     HOOK_NAMES.has(tag.callee.name)
   ) {
     hookName = tag.callee.name as HookName
-    security = extractSecurity(tag.arguments, path, filename)
+    options = extractOptions(tag.arguments, path, filename)
   } else {
     return null
   }
@@ -64,45 +69,53 @@ export function extractTaggedTemplate(
   const canonicalSQL = buildCanonicalSQL(quasi.quasis, params.length)
   const bodySQL = buildBodySQL(quasi.quasis, params)
   const hash = fingerprintSQL(canonicalSQL)
+  const line = path.node.loc?.start.line
 
   return {
     hookName,
     sqlFunction: {
-      name: toFunctionName(hash),
+      name: toFunctionName(hash, options.label),
       sql: bodySQL,
       params,
       hash,
-      security,
+      security: options.security,
       type: hookName === 'useTransaction' ? 'query' : 'mutation',
+      source: { file: filename, line: line ?? 0 },
     },
   }
 }
 
-function extractSecurity(
+function extractOptions(
   args: t.CallExpression['arguments'],
   path: NodePath,
   filename: string,
-): SecurityMode {
+): ExtractedOptions {
+  const result: ExtractedOptions = { security: 'invoker', label: undefined }
   const options = args[0]
-  if (!options || !t.isObjectExpression(options)) return 'invoker'
+  if (!options || !t.isObjectExpression(options)) return result
 
   for (const prop of options.properties) {
-    if (
-      t.isObjectProperty(prop) &&
-      t.isIdentifier(prop.key, { name: 'security' }) &&
-      t.isStringLiteral(prop.value)
-    ) {
+    if (!t.isObjectProperty(prop) || !t.isIdentifier(prop.key)) continue
+
+    if (prop.key.name === 'security' && t.isStringLiteral(prop.value)) {
       const val = prop.value.value
-      if (val === 'invoker' || val === 'definer') return val
-      throw new CompilerError(
-        `Invalid security option "${val}". Must be "invoker" or "definer".`,
-        filename,
-        prop.value.loc,
-      )
+      if (val === 'invoker' || val === 'definer') {
+        result.security = val
+      } else {
+        throw new CompilerError(
+          `Invalid security option "${val}". Must be "invoker" or "definer".`,
+          filename,
+          prop.value.loc,
+        )
+      }
+    }
+
+    if (prop.key.name === 'label' && t.isStringLiteral(prop.value)) {
+      result.label = prop.value.value
     }
   }
 
-  return 'invoker'
+  return result
 }
 
 function extractParams(
@@ -129,10 +142,7 @@ function extractParams(
 
 // Canonical form uses $1/$2 positional placeholders so that renaming a variable
 // does not change the hash and produce a new migration.
-function buildCanonicalSQL(
-  quasis: t.TemplateElement[],
-  paramCount: number,
-): string {
+function buildCanonicalSQL(quasis: t.TemplateElement[], paramCount: number): string {
   let sql = ''
   for (let i = 0; i < quasis.length; i++) {
     sql += quasis[i]?.value.cooked ?? quasis[i]?.value.raw ?? ''

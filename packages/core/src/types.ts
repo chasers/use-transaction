@@ -2,6 +2,7 @@ export type SecurityMode = 'invoker' | 'definer'
 
 export interface TransactionOptions {
   security?: SecurityMode
+  label?: string
 }
 
 export interface QueryResult<T> {

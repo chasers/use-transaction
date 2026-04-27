@@ -60,6 +60,20 @@ describe('DefaultAdapter', () => {
     expect(content).toContain('-- hash: abc12345')
   })
 
+  it('writes the source comment when source is provided', async () => {
+    const adapter = new DefaultAdapter({ outputDir })
+    await adapter.emit(makeFn({ source: { file: 'src/components/UserList.tsx', line: 14 } }))
+    const content = await readSqlFile()
+    expect(content).toContain('-- source: src/components/UserList.tsx:14')
+  })
+
+  it('omits the source comment when source is not provided', async () => {
+    const adapter = new DefaultAdapter({ outputDir })
+    await adapter.emit(makeFn()) // makeFn does not set source by default
+    const content = await readSqlFile()
+    expect(content).not.toContain('-- source:')
+  })
+
   it('writes CREATE OR REPLACE FUNCTION with the function name', async () => {
     const adapter = new DefaultAdapter({ outputDir })
     await adapter.emit(makeFn())
