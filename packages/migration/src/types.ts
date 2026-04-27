@@ -1,4 +1,5 @@
 export type SecurityMode = 'invoker' | 'definer'
+export type SqlFunctionType = 'query' | 'mutation'
 
 export interface SqlParam {
   name: string
@@ -11,6 +12,7 @@ export interface SqlFunction {
   params: SqlParam[]
   hash: string
   security: SecurityMode
+  type: SqlFunctionType
 }
 
 export interface MigrationAdapter {

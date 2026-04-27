@@ -73,6 +73,7 @@ export function extractTaggedTemplate(
       params,
       hash,
       security,
+      type: hookName === 'useTransaction' ? 'query' : 'mutation',
     },
   }
 }

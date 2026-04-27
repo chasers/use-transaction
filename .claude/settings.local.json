@@ -9,7 +9,8 @@
       "Bash(pnpm typecheck *)",
       "Bash(git commit *)",
       "Bash(pnpm install *)",
-      "Bash(pnpm --filter @use-transaction/compiler test)"
+      "Bash(pnpm --filter @use-transaction/compiler test)",
+      "Bash(pnpm *)"
     ]
   }
 }
