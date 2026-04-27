@@ -1,3 +1,7 @@
 export { babelPlugin } from './babel-plugin.js'
 export { vitePlugin } from './vite-plugin.js'
+export { extractTaggedTemplate, extractFromSource } from './extractor.js'
+export { fingerprintSQL, normalizeSQL, toFunctionName } from './fingerprint.js'
+export { CompilerError } from './errors.js'
 export type { CompilerOptions } from './types.js'
+export type { ExtractedCall, HookName } from './extractor.js'
